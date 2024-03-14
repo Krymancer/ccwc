@@ -33,19 +33,44 @@ fn main() {
         panic!("Reading from std in not yet implemented");
     }
 
+    if flags.len() < 1 {
+        flags.push('c');
+        flags.push('l');
+        flags.push('w');
+    }
+
     for path in files_paths {
         match File::open(&path) {
             Ok(file) => {
-                if flags.len() < 1 {
-                    // same as using -c -l -w 
-                    // we have to print number of lines, words and bytes
-                    let bytes = file.metadata().unwrap().len();
-                    let reader = BufReader::new(file);
-                    let lines: Vec<String> = reader.lines().filter_map(Result::ok).collect();
+                let bytes = file.metadata().unwrap().len();
+                let reader = BufReader::new(file);
+                let lines: Vec<String> = reader.lines().filter_map(Result::ok).collect();
+                
+                if flags.contains(&'l') {
                     let lines_count = lines.len();
-                    let words = lines.iter().map(|line| line.split_whitespace()).flatten().count(); 
-                    println!("{lines_count} {words} {bytes} {path}");
+                    print!("{lines_count} ");
                 }
+
+                if flags.contains(&'w') {
+                    let words = lines.iter().map(|line| line.split_whitespace()).flatten().count(); 
+                    print!("{words} ");
+                }
+
+                if flags.contains(&'m') {
+                    let chars = lines.iter().map(|line| line.chars()).flatten().count() + lines.len(); 
+                    print!("{chars} ");
+                }
+
+                if flags.contains(&'c') {
+                    print!("{bytes} ");
+                }
+
+                if flags.contains(&'L') {
+                    let max_line_lenght = lines.iter().map(|line| line.len()).max().unwrap();
+                    print!("{max_line_lenght} ");
+                }
+
+                println!("{path}");
             }, 
             Err(_) => {
                 println!("ccwc: {path}: No such file or directory\n");
